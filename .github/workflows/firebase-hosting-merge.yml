@@ -11,7 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: 'npm run test-ci && npm run build:prod'
+      - name: "change to app dir"
+        working-directory: ./app
+        run: |
+          npm ci
+          npm run test-ci
+          npm run build:prod
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
