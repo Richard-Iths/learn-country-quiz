@@ -15,7 +15,8 @@ jobs:
         working-directory: ./app
         run: |
           npm ci
-          'npm run test-ci && npm run build:prod'
+          npm run test-ci
+          npm run build:prod
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
