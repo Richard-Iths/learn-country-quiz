@@ -19,7 +19,11 @@ jobs:
           npm run build:prod
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
+          working-directory: ./app
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TP_GIT_GUD }}'
           channelId: live
           projectId: tp-git-gud
+          
+  
+       
