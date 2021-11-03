@@ -7,6 +7,9 @@ import * as utils from './utils'
 import countries from './countries'
 import winning from '../assets/winning.png'
 import dog from '../assets/dog.png'
+import "./featureFlags"
+
+
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app"
@@ -37,10 +40,10 @@ const db = getDatabase(app);
 
 
 function App() {
-
+	const {improvedHeader} = JSON.parse(localStorage.getItem("features"))
 	return (
 		<div className="app">
-			<div className="header">THE FLAG GAME</div>
+			<div className="header">{improvedHeader?"IMPROVED FLAG GAME":"THE FLAG GAME"}</div>
 			<div className="middle">
 				<Route path="/">
 					<StartPage />
