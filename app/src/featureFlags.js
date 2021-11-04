@@ -15,6 +15,10 @@ const FeatureFlags = {
     value: false,
     description: "Tie Screen",
   },
+  improvedQuestions: {
+    value: false,
+    description: "Get random questions",
+  },
 };
 
 Object.freeze(FeatureFlags);
