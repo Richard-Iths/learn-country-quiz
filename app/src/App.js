@@ -11,9 +11,11 @@ import tie from "../assets/tie.jpg";
 import "./featureFlags";
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { ref, getDatabase, set, update } from "firebase/database";
 import { useObject } from "react-firebase-hooks/database";
+import { InitAnalytics, LogAnalyzer } from "./analytics";
+
+
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvxyz", 5);
 
@@ -33,7 +35,8 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+const analytics = InitAnalytics(app);
 
 const db = getDatabase(app);
 
@@ -60,6 +63,7 @@ function App() {
         </Route>
       </div>
       <div className="footer"></div>
+      <CookieBanner/>
     </div>
   );
 }
@@ -74,6 +78,7 @@ const StartPage = () => {
   const nextGame = snapshot.val();
 
   const play = async () => {
+   LogAnalyzer(analytics, 'clicked Play')
     if (R.isNil(nextGame)) {
       const updates = {};
       const gameId = nanoid();
@@ -372,6 +377,25 @@ const Tie = ({ you, opponent }) => {
     </div>
   );
 };
+
+
+const CookieBanner = () => {
+  return(
+    <div className="CookieBanner">
+      <p>
+        We are stealing your data, would you like us to continue?
+        <div className="CookieWrapper">
+        <span>
+          Yes
+        </span>
+        <span>
+          No
+        </span>
+        </div>
+      </p>      
+    </div>
+  )
+}
 
 const SetupPage = () => {
   const [storage, setStorage] = React.useState(

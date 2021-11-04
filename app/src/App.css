@@ -143,3 +143,24 @@
 .re-home {
 	margin-top: 2rem;
 }
+
+.CookieBanner {
+	position: absolute;
+	bottom: 0;
+	padding: 2rem;
+	background-color: peachpuff;
+	left: 50%;
+	transform: translate(-50%, -50%);
+
+}
+
+.CookieBanner p{
+	display: flex;
+	flex-direction: column;
+}
+
+.CookieWrapper{
+	display: flex;
+	justify-content: center;
+	gap: 2rem;
+}
