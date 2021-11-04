@@ -42,11 +42,14 @@ function App() {
   return (
     <div className="app">
       <div className="header">
-        {improvedHeader ? "IMPROVED FLAG GAME" : "THE FLAG GAME"}
+        {improvedHeader.value ? "IMPROVED FLAG GAME" : "THE FLAG GAME"}
       </div>
       <div className="middle">
         <Route path="/">
           <StartPage />
+        </Route>
+        <Route path="/setup">
+          <SetupPage />
         </Route>
         <Route path="/game/:gameId/:playerId">
           {(params) => {
@@ -94,7 +97,7 @@ const StartPage = () => {
   return (
     <div className="page">
       <div className="st-flags">
-        {improvedFrontPageFlags ? (
+        {improvedFrontPageFlags.value ? (
           R.compose(R.keys)(countries)
             .sort(() => 0.5 - Math.random())
             .splice(0, 60)
@@ -272,14 +275,15 @@ const QuestionPage = ({ gameId, playerId }) => {
           }
           return (
             <div
-              className={`button alt ${correct && "alt-green"} ${correct === false && "alt-red"
-                }`}
+              className={`button alt ${correct && "alt-green"} ${
+                correct === false && "alt-red"
+              }`}
               key={countryCode}
               title={countryCode}
               onClick={() => answer(countryCode)}
             >
               {countries[countryCode.toUpperCase()]}
-              { }
+              {}
               {youOrOpponent && (
                 <div className="alt-label">{youOrOpponent}</div>
               )}
@@ -319,17 +323,17 @@ const ResultsPage = ({ gameId, playerId }) => {
 
   const youWon = game.score[youKey] > game.score[opponentKey];
   const youtie = game.score[youKey] == game.score[opponentKey];
-  const { improvedResultsTie } = JSON.parse(localStorage.getItem('features'))
+  const { improvedResultsTie } = JSON.parse(localStorage.getItem("features"));
 
   return (
     <div className="page">
       {youWon && (
         <Won you={game.score[youKey]} opponent={game.score[opponentKey]} />
       )}
-      {!youWon && !improvedResultsTie && (
+      {!youWon && !improvedResultsTie.value && (
         <Lost you={game.score[youKey]} opponent={game.score[opponentKey]} />
       )}
-      {youtie && improvedResultsTie && (
+      {youtie && improvedResultsTie.value && (
         <Tie you={game.score[youKey]} opponent={game.score[opponentKey]} />
       )}
       <Link href="/" className="re-home link">
@@ -366,6 +370,56 @@ const Tie = ({ you, opponent }) => {
       <div className="re-text">Git gud...</div>
       <QuickResults you={you} opponent={opponent} />
     </div>
+  );
+};
+
+const SetupPage = () => {
+  const [storage, setStorage] = React.useState(
+    JSON.parse(localStorage.getItem("features"))
+  );
+  const changeLsValue = (e) => {
+    const input = e.target;
+    const [key] = input.id.split("-");
+    setStorage({
+      ...storage,
+      [key]: {
+        value: !storage[key].value,
+        description: storage[key].description,
+      },
+    });
+  };
+
+  React.useEffect(() => {
+    localStorage.setItem("features", JSON.stringify(storage));
+  }, [storage]);
+  return (
+    <section className="setup">
+      {Object.entries(storage).map((item) => {
+        const [key, value] = item;
+        return (
+          <div className="setup__storage-key" key={key}>
+            <h3>{value.description}</h3>
+            <div className="cta-wrapper">
+              <span
+                id={`${key}-true`}
+                onClick={changeLsValue}
+                className={`setup__storage-key--${value.value && "toggleOn"}`}
+              >
+                ON
+              </span>
+              <span
+                id={`${key}-false`}
+                onClick={changeLsValue}
+                className={`setup__storage-key--${!value.value && "toggleOn"}`}
+              >
+                OFF
+              </span>
+            </div>
+          </div>
+        );
+      })}
+      <Link href="/">Go to app</Link>
+    </section>
   );
 };
 

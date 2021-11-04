@@ -101,3 +101,59 @@ code {
 .h17 { height: 7.0rem; }
 
 .tac { text-align: center; }
+
+.setup {
+	min-width: 400px;
+	display: flex;
+	flex-direction: column;
+}
+.setup__storage-key {
+	padding: 2rem;
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
+}
+.setup__storage-key--toggleOn {
+	background-color: #1a73e8;
+	color:#fff;
+}
+.cta-wrapper {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2rem;
+	color:#b13434;
+}
+.cta-wrapper span {
+	padding: 1rem;
+	cursor: pointer;
+	border-radius: 6px;
+	font-weight: bold;
+}
+.cta-wrapper span:hover{
+	background-color: greenyellow;
+}
+.setup a {
+	padding: 1rem;
+	background-color: hotpink;
+	display: block;
+	text-decoration: none;
+	font-size: 1.2em;
+	font-weight: bold;
+	min-width: 15rem;
+	align-self: center;
+	border-radius: 6px;
+	text-align: center;
+	color:#fff;
+}
+.setup a:hover {
+	padding: 1rem;
+	background-color: rgba(255, 105, 180, 0.76);
+	display: block;
+	text-decoration: none;
+	font-size: 1.2em;
+	font-weight: bold;
+	min-width: 15rem;
+	align-self: center;
+	border-radius: 6px;
+	text-align: center;
+}
