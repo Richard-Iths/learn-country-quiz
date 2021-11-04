@@ -7,6 +7,7 @@ import * as utils from "./utils";
 import countries from "./countries";
 import winning from "../assets/winning.png";
 import dog from "../assets/dog.png";
+import tie from "../assets/tie.jpg";
 import "./featureFlags";
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
@@ -271,15 +272,14 @@ const QuestionPage = ({ gameId, playerId }) => {
           }
           return (
             <div
-              className={`button alt ${correct && "alt-green"} ${
-                correct === false && "alt-red"
-              }`}
+              className={`button alt ${correct && "alt-green"} ${correct === false && "alt-red"
+                }`}
               key={countryCode}
               title={countryCode}
               onClick={() => answer(countryCode)}
             >
               {countries[countryCode.toUpperCase()]}
-              {}
+              { }
               {youOrOpponent && (
                 <div className="alt-label">{youOrOpponent}</div>
               )}
@@ -317,15 +317,20 @@ const ResultsPage = ({ gameId, playerId }) => {
   const youKey = `player${playerId}`;
   const opponentKey = `player${parseInt(playerId) === 1 ? 2 : 1}`;
 
-  const youWon = game.score[youKey] >= game.score[opponentKey];
+  const youWon = game.score[youKey] > game.score[opponentKey];
+  const youtie = game.score[youKey] == game.score[opponentKey];
+  const { improvedResultsTie } = JSON.parse(localStorage.getItem('features'))
 
   return (
     <div className="page">
       {youWon && (
         <Won you={game.score[youKey]} opponent={game.score[opponentKey]} />
       )}
-      {!youWon && (
+      {!youWon && !improvedResultsTie && (
         <Lost you={game.score[youKey]} opponent={game.score[opponentKey]} />
+      )}
+      {youtie && improvedResultsTie && (
+        <Tie you={game.score[youKey]} opponent={game.score[opponentKey]} />
       )}
       <Link href="/" className="re-home link">
         Home
@@ -349,6 +354,16 @@ const Lost = ({ you, opponent }) => {
     <div className="results">
       <img src={dog} style={{ width: "80%" }} />
       <div className="re-text">Better luck next time...</div>
+      <QuickResults you={you} opponent={opponent} />
+    </div>
+  );
+};
+
+const Tie = ({ you, opponent }) => {
+  return (
+    <div className="results">
+      <img src={tie} style={{ width: "100%" }} />
+      <div className="re-text">Git gud...</div>
       <QuickResults you={you} opponent={opponent} />
     </div>
   );
