@@ -410,7 +410,7 @@ const CookieBanner = ({ children }) => {
             <p> We are stealing your data, would you like us to continue?</p>
             <div className="CookieCheckbox">
               <div className="CookieCheckbox_Cookie">
-                <h6> necessary</h6>
+                <h6>NECESSARY</h6>
                 <span className="CookieLocked">
                   {agreement.necessary && '✔'}
                 </span>
