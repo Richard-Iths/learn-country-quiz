@@ -36,35 +36,39 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-const analytics = InitAnalytics(app);
+let analytics = null;
 
 const db = getDatabase(app);
 
 function App() {
   const { improvedHeader } = JSON.parse(localStorage.getItem("features"));
+
+
+
   return (
-    <div className="app">
-      <div className="header">
-        {improvedHeader.value ? "IMPROVED FLAG GAME" : "THE FLAG GAME"}
+    <CookieBanner>
+      <div className="app">
+        <div className="header">
+          {improvedHeader.value ? "IMPROVED FLAG GAME" : "THE FLAG GAME"}
+        </div>
+        <div className="middle">
+          <Route path="/">
+            <StartPage />
+          </Route>
+          <Route path="/setup">
+            <SetupPage />
+          </Route>
+          <Route path="/game/:gameId/:playerId">
+            {(params) => {
+              return (
+                <GamePage gameId={params.gameId} playerId={params.playerId} />
+              );
+            }}
+          </Route>
+        </div>
+        <div className="footer"></div>
       </div>
-      <div className="middle">
-        <Route path="/">
-          <StartPage />
-        </Route>
-        <Route path="/setup">
-          <SetupPage />
-        </Route>
-        <Route path="/game/:gameId/:playerId">
-          {(params) => {
-            return (
-              <GamePage gameId={params.gameId} playerId={params.playerId} />
-            );
-          }}
-        </Route>
-      </div>
-      <div className="footer"></div>
-      <CookieBanner/>
-    </div>
+    </CookieBanner>
   );
 }
 
@@ -78,7 +82,9 @@ const StartPage = () => {
   const nextGame = snapshot.val();
 
   const play = async () => {
-   LogAnalyzer(analytics, 'clicked Play')
+    if (analytics) {
+      LogAnalyzer(analytics, 'clicked Play')
+    }
     if (R.isNil(nextGame)) {
       const updates = {};
       const gameId = nanoid();
@@ -240,7 +246,6 @@ const QuestionPage = ({ gameId, playerId }) => {
     if (countryCode == question.correct) {
       updates[`/games/${gameId}/score/${youKey}`] = game.score[youKey] + 1;
     } else {
-      console.log("hello from else");
       if (improvedScoring) {
         updates[`/games/${gameId}/score/${youKey}`] = game.score[youKey] - 1;
       }
@@ -280,15 +285,14 @@ const QuestionPage = ({ gameId, playerId }) => {
           }
           return (
             <div
-              className={`button alt ${correct && "alt-green"} ${
-                correct === false && "alt-red"
-              }`}
+              className={`button alt ${correct && "alt-green"} ${correct === false && "alt-red"
+                }`}
               key={countryCode}
               title={countryCode}
               onClick={() => answer(countryCode)}
             >
               {countries[countryCode.toUpperCase()]}
-              {}
+              { }
               {youOrOpponent && (
                 <div className="alt-label">{youOrOpponent}</div>
               )}
@@ -379,21 +383,55 @@ const Tie = ({ you, opponent }) => {
 };
 
 
-const CookieBanner = () => {
-  return(
-    <div className="CookieBanner">
-      <p>
-        We are stealing your data, would you like us to continue?
-        <div className="CookieWrapper">
-        <span>
-          Yes
-        </span>
-        <span>
-          No
-        </span>
-        </div>
-      </p>      
-    </div>
+const CookieBanner = ({ children }) => {
+
+  const [agreement, setAgreement] = React.useState(JSON.parse(localStorage.getItem("agreement")))
+
+  const cookieChoice = (e) => {
+    const target = e.target
+    setAgreement({ ...agreement, [target.id]: !agreement[target.id] })
+  }
+
+  const bannerOkay = () => {
+    setAgreement({ ...agreement, consent: true })
+  }
+
+  React.useEffect(() => {
+    localStorage.setItem("agreement", JSON.stringify(agreement))
+    analytics = agreement.marketing && agreement.consent && InitAnalytics(app)
+  }, [agreement])
+
+
+  return (
+    <>{children}
+      {!agreement.consent &&
+        < div className="CookieBanner" >
+          <div className="CookieWrapper">
+            <p> We are stealing your data, would you like us to continue?</p>
+            <div className="CookieCheckbox">
+              <div className="CookieCheckbox_Cookie">
+                <h6> NESSECARY</h6>
+                <span className="CookieLocked">
+                  {agreement.nessacry && '✔'}
+                </span>
+              </div>
+              <div className="CookieCheckbox_Cookie">
+                <h6>
+                  MARKETING
+                </h6>
+                <span id="marketing" className="CookieChoice" onClick={cookieChoice}>
+                  {agreement.marketing && '✔'}
+
+                </span>
+              </div>
+            </div>
+            <div className="CookieCTA">
+              <button className="CookieButton" onClick={bannerOkay}>Okay</button>
+            </div>
+          </div>
+        </div >
+      }
+    </>
   )
 }
 
