@@ -412,7 +412,7 @@ const CookieBanner = ({ children }) => {
               <div className="CookieCheckbox_Cookie">
                 <h6> NESSECARY</h6>
                 <span className="CookieLocked">
-                  {agreement.nessacry && '✔'}
+                  {agreement.nessacary && '✔'}
                 </span>
               </div>
               <div className="CookieCheckbox_Cookie">
