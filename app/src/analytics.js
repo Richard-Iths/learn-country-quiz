@@ -1,11 +1,11 @@
 import { getAnalytics, logEvent } from "firebase/analytics";
 
-(()=>{
-  
-  if(!localStorage.getItem("agreement")){
-     localStorage.setItem("agreement",JSON.stringify({consent:false, marketing:true, nessecary:true}))
-  
-    
+(() => {
+
+  if (!localStorage.getItem("agreement")) {
+    localStorage.setItem("agreement", JSON.stringify({ consent: false, marketing: true, necessary: true }))
+
+
   }
 })()
 
@@ -14,9 +14,9 @@ export const InitAnalytics = (app) => {
 
 }
 export const LogAnalyzer = (analytics, event) => {
-  const {marketing, consent} = JSON.parse(localStorage.getItem("agreement"))
-  if(marketing && consent){
+  const { marketing, consent } = JSON.parse(localStorage.getItem("agreement"))
+  if (marketing && consent) {
     console.log("gucci");
-    logEvent(analytics,event)
+    logEvent(analytics, event)
   }
 }
