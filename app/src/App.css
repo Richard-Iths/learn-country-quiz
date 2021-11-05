@@ -195,6 +195,29 @@
 	color:red;
 }
 
+.cookie-wrapper {
+	background-color: #fff;
+	max-width: 400px;
+	padding: 2rem 3rem;
+}
+
+.cookie-explanation {
+	display: grid;
+	place-items: center;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	border: 1px solid #000;
+	background-color: rgba(0, 0, 0, .7);
+}
+
+.cookie-banner-link {
+	background-color: blue;
+	color: #fff;
+}
+
 .CookieCTA{
 	display: flex;
 	justify-content: flex-end;

@@ -382,8 +382,47 @@ const Tie = ({ you, opponent }) => {
   );
 };
 
+const CookieExplanation = ({ onClickHandler }) => {
+  return (
+    <div onClick={onClickHandler} className="cookie-explanation">
+      <div className="cookie-wrapper">
+        <div className="necessary">
+
+        </div>
+        <div className="statistic">
+          <ul>
+            <li>
+              <div>
+                <h3>Google analytics</h3>
+                <p>Google Analytics is a web analytics service that provides statistics and basic analytical tools for search engine optimization (SEO) and marketing purposes....Google Analytics is used to track website performance and collect visitor insights.</p>
+                <p>
+                  <ul>
+                    <li>
+                      <p>_ga     2 years     Used to distinguish users.</p>
+                    </li>
+                    <li>
+                      <p>ga {"<container-id>"}     2 years     Used to persist session state.</p>
+                    </li>
+                  </ul>
+                </p>
+              </div>
+            </li>
+
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CookieBanner = ({ children }) => {
+
+  const [showCookieChoice, setShowCookieChoice] = React.useState(false)
+
+  const toggleShowCookieChoice = () => {
+    setShowCookieChoice(!showCookieChoice)
+  }
+
 
   const [agreement, setAgreement] = React.useState(JSON.parse(localStorage.getItem("agreement")))
 
@@ -398,7 +437,7 @@ const CookieBanner = ({ children }) => {
 
   React.useEffect(() => {
     localStorage.setItem("agreement", JSON.stringify(agreement))
-    analytics = agreement.marketing && agreement.consent && InitAnalytics(app)
+    analytics = agreement.statistic && agreement.consent && InitAnalytics(app)
   }, [agreement])
 
 
@@ -407,7 +446,9 @@ const CookieBanner = ({ children }) => {
       {!agreement.consent &&
         < div className="CookieBanner" >
           <div className="CookieWrapper">
-            <p> We are stealing your data, would you like us to continue?</p>
+            <p> We are stealing your data, would you like us to continue?
+              <span onClick={toggleShowCookieChoice} className="cookie-banner-link">Read more...</span></p>
+
             <div className="CookieCheckbox">
               <div className="CookieCheckbox_Cookie">
                 <h6>NECESSARY</h6>
@@ -417,10 +458,10 @@ const CookieBanner = ({ children }) => {
               </div>
               <div className="CookieCheckbox_Cookie">
                 <h6>
-                  MARKETING
+                  STATISTIC
                 </h6>
-                <span id="marketing" className="CookieChoice" onClick={cookieChoice}>
-                  {agreement.marketing && '✔'}
+                <span id="statistic" className="CookieChoice" onClick={cookieChoice}>
+                  {agreement.statistic && '✔'}
 
                 </span>
               </div>
@@ -431,6 +472,7 @@ const CookieBanner = ({ children }) => {
           </div>
         </div >
       }
+      {showCookieChoice && <CookieExplanation onClickHandler={toggleShowCookieChoice} />}
     </>
   )
 }
