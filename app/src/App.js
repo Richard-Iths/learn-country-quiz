@@ -15,8 +15,6 @@ import { ref, getDatabase, set, update } from "firebase/database";
 import { useObject } from "react-firebase-hooks/database";
 import { InitAnalytics, LogAnalyzer } from "./analytics";
 
-
-
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvxyz", 5);
 
 // Your web app's Firebase configuration
@@ -42,8 +40,18 @@ const db = getDatabase(app);
 
 function App() {
   const { improvedHeader } = JSON.parse(localStorage.getItem("features"));
-
-
+  const [featureProfile, setFeatureProfile] = React.useState(null);
+  React.useEffect(() => {
+    if (!localStorage.getItem("profile")) {
+      const random = Math.floor(Math.random() * 10);
+      if (random > 3) {
+        localStorage.setItem("profile", JSON.stringify({ profile: "rest" }));
+      } else {
+        localStorage.setItem("profile", JSON.stringify({ profile: "pilot" }));
+      }
+    }
+    setFeatureProfile(JSON.parse(localStorage.getItem("profile")));
+  }, []);
 
   return (
     <CookieBanner>
@@ -58,6 +66,9 @@ function App() {
           <Route path="/setup">
             <SetupPage />
           </Route>
+          <Route path="/advance-setup">
+            <AdvanceSetupPage />
+          </Route>
           <Route path="/game/:gameId/:playerId">
             {(params) => {
               return (
@@ -66,7 +77,11 @@ function App() {
             }}
           </Route>
         </div>
-        <div className="footer"></div>
+        <div
+          className={`footer ${
+            featureProfile ? "footer-color-" + featureProfile.profile : ""
+          }`}
+        ></div>
       </div>
     </CookieBanner>
   );
@@ -83,7 +98,7 @@ const StartPage = () => {
 
   const play = async () => {
     if (analytics) {
-      LogAnalyzer(analytics, 'clicked Play')
+      LogAnalyzer(analytics, "clicked Play");
     }
     if (R.isNil(nextGame)) {
       const updates = {};
@@ -285,14 +300,15 @@ const QuestionPage = ({ gameId, playerId }) => {
           }
           return (
             <div
-              className={`button alt ${correct && "alt-green"} ${correct === false && "alt-red"
-                }`}
+              className={`button alt ${correct && "alt-green"} ${
+                correct === false && "alt-red"
+              }`}
               key={countryCode}
               title={countryCode}
               onClick={() => answer(countryCode)}
             >
               {countries[countryCode.toUpperCase()]}
-              { }
+              {}
               {youOrOpponent && (
                 <div className="alt-label">{youOrOpponent}</div>
               )}
@@ -386,28 +402,34 @@ const CookieExplanation = ({ onClickHandler }) => {
   return (
     <div onClick={onClickHandler} className="cookie-explanation">
       <div className="cookie-wrapper">
-        <div className="necessary">
-
-        </div>
+        <div className="necessary"></div>
         <div className="statistic">
           <ul>
             <li>
               <div>
                 <h3>Google analytics</h3>
-                <p>Google Analytics is a web analytics service that provides statistics and basic analytical tools for search engine optimization (SEO) and marketing purposes....Google Analytics is used to track website performance and collect visitor insights.</p>
+                <p>
+                  Google Analytics is a web analytics service that provides
+                  statistics and basic analytical tools for search engine
+                  optimization (SEO) and marketing purposes....Google Analytics
+                  is used to track website performance and collect visitor
+                  insights.
+                </p>
                 <p>
                   <ul>
                     <li>
-                      <p>_ga     2 years     Used to distinguish users.</p>
+                      <p>_ga 2 years Used to distinguish users.</p>
                     </li>
                     <li>
-                      <p>ga {"<container-id>"}     2 years     Used to persist session state.</p>
+                      <p>
+                        ga {"<container-id>"} 2 years Used to persist session
+                        state.
+                      </p>
                     </li>
                   </ul>
                 </p>
               </div>
             </li>
-
           </ul>
         </div>
       </div>
@@ -416,66 +438,79 @@ const CookieExplanation = ({ onClickHandler }) => {
 };
 
 const CookieBanner = ({ children }) => {
-
-  const [showCookieChoice, setShowCookieChoice] = React.useState(false)
+  const [showCookieChoice, setShowCookieChoice] = React.useState(false);
 
   const toggleShowCookieChoice = () => {
-    setShowCookieChoice(!showCookieChoice)
-  }
+    setShowCookieChoice(!showCookieChoice);
+  };
 
-
-  const [agreement, setAgreement] = React.useState(JSON.parse(localStorage.getItem("agreement")))
+  const [agreement, setAgreement] = React.useState(
+    JSON.parse(localStorage.getItem("agreement"))
+  );
 
   const cookieChoice = (e) => {
-    const target = e.target
-    setAgreement({ ...agreement, [target.id]: !agreement[target.id] })
-  }
+    const target = e.target;
+    setAgreement({ ...agreement, [target.id]: !agreement[target.id] });
+  };
 
   const bannerOkay = () => {
-    setAgreement({ ...agreement, consent: true })
-  }
+    setAgreement({ ...agreement, consent: true });
+  };
 
   React.useEffect(() => {
-    localStorage.setItem("agreement", JSON.stringify(agreement))
-    analytics = agreement.statistic && agreement.consent && InitAnalytics(app)
-  }, [agreement])
-
+    localStorage.setItem("agreement", JSON.stringify(agreement));
+    analytics = agreement.statistic && agreement.consent && InitAnalytics(app);
+  }, [agreement]);
 
   return (
-    <>{children}
-      {!agreement.consent &&
-        < div className="CookieBanner" >
+    <>
+      {children}
+      {!agreement.consent && (
+        <div className="CookieBanner">
           <div className="CookieWrapper">
-            <p> We are stealing your data, would you like us to continue?
-              <span onClick={toggleShowCookieChoice} className="cookie-banner-link">Read more...</span></p>
+            <p>
+              {" "}
+              We are stealing your data, would you like us to continue?
+              <span
+                onClick={toggleShowCookieChoice}
+                className="cookie-banner-link"
+              >
+                Read more...
+              </span>
+            </p>
 
             <div className="CookieCheckbox">
               <div className="CookieCheckbox_Cookie">
                 <h6>NECESSARY</h6>
                 <span className="CookieLocked">
-                  {agreement.necessary && '✔'}
+                  {agreement.necessary && "✔"}
                 </span>
               </div>
               <div className="CookieCheckbox_Cookie">
-                <h6>
-                  STATISTIC
-                </h6>
-                <span id="statistic" className="CookieChoice" onClick={cookieChoice}>
-                  {agreement.statistic && '✔'}
-
+                <h6>STATISTIC</h6>
+                <span
+                  id="statistic"
+                  className="CookieChoice"
+                  onClick={cookieChoice}
+                >
+                  {agreement.statistic && "✔"}
                 </span>
               </div>
             </div>
             <div className="CookieCTA">
-              <button className="CookieButton" onClick={bannerOkay}>Okay</button>
+              <button className="CookieButton" onClick={bannerOkay}>
+                Okay
+              </button>
             </div>
           </div>
-        </div >
-      }
-      {showCookieChoice && <CookieExplanation onClickHandler={toggleShowCookieChoice} />}
+        </div>
+      )}
+      {showCookieChoice && (
+        <CookieExplanation onClickHandler={toggleShowCookieChoice} />
+      )}
     </>
-  )
-}
+  );
+};
 
 const SetupPage = () => {
   const [storage, setStorage] = React.useState(
@@ -523,6 +558,107 @@ const SetupPage = () => {
         );
       })}
       <Link href="/">Go to app</Link>
+    </section>
+  );
+};
+
+const AdvanceSetupPage = () => {
+  const [snapshot, loading, error] = useObject(ref(db, "feature_flags"));
+  const [featureFlagsHeaders, setFeatureFlagsHeaders] = React.useState([]);
+  const [featureFlagsBodies, setFeatureFlagsBodies] = React.useState([]);
+  React.useEffect(() => {
+    if (!loading) {
+      const snapshotValues = Object.entries(snapshot.val());
+      setFeatureFlagsHeaders(Object.values(snapshot.val().labels));
+      setFeatureFlagsBodies(
+        snapshotValues.filter((snap) => snap[0] !== "labels")
+      );
+    }
+  }, [snapshot]);
+  const toggleFeature = async (e) => {
+    const target = e.target;
+    const snap = snapshot.val();
+    const [key, value] = target.id.split("-");
+    const data = {
+      ...snap,
+      [key]: {
+        ...snap[key],
+        [value]: !snap[key][value],
+      },
+    };
+    const updates = {};
+    updates[`/feature_flags/`] = {
+      ...data,
+    };
+    await update(ref(db), updates);
+  };
+
+  return (
+    <section className="advance-feature-flags">
+      <table className="advance-feature-flags__table">
+        <thead>
+          <tr>
+            <th></th>
+            {featureFlagsHeaders &&
+              featureFlagsHeaders.map((item) => (
+                <th key={item}>{item.replace("_", " ")}</th>
+              ))}
+          </tr>
+        </thead>
+        <tbody>
+          {featureFlagsBodies &&
+            featureFlagsBodies.map((item) => {
+              const [key, values] = item;
+
+              return (
+                <tr key={key}>
+                  <td>{key}</td>
+                  {Object.entries(values).map((item, index) => {
+                    const [k, value] = item;
+                    return value ? (
+                      <td
+                        onClick={(e) => {
+                          if (key === "alpha" || key === "beta") {
+                            toggleFeature(e);
+                          }
+                        }}
+                        key={index}
+                        id={`${key}-${k}`}
+                        className={`table-on ${
+                          key === "alpha" || key === "beta"
+                            ? "table-clickable"
+                            : ""
+                        }`}
+                      >
+                        {typeof value === "string" ? value : "On"}
+                      </td>
+                    ) : (
+                      <td
+                        key={index}
+                        id={`${key}-${k}`}
+                        onClick={(e) => {
+                          if (
+                            key === "alpha" ||
+                            (key === "beta" && toggleFeature)
+                          ) {
+                            toggleFeature(e);
+                          }
+                        }}
+                        className={`table-off ${
+                          key === "alpha" || key === "beta"
+                            ? "table-clickable"
+                            : ""
+                        }`}
+                      >
+                        Off
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+        </tbody>
+      </table>
     </section>
   );
 };

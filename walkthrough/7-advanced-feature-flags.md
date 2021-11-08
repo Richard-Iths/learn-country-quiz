@@ -4,7 +4,7 @@ Gwen, then Sales Director of Initech have been watching your progress and is ver
 ## Feature flags using Firebase
 Keep your exising feature flags for previous tasks using local storage. But also add a second feature flagging system based on firebase. That is, your feature flags should reside in firebase.
 
-The difference is now we want to bundle feature flags into different "profiles". We want to have an "alpha" and a "beta" profile that can be congifured to have different feature flags flipped on or off. We also want to be able to gradually roll out new features to our user base instead. Therefore we also want two profiles called "pilots" and "rest" where the idea is to ranomly have 30% or users be "pilots" and get to try some new features before the "rest" 70%. By doing this we can run some usabilitiy studies on the "pilot" group and see if new features seems appriciated before pushing them out to all our users.
+The difference is now we want to bundle feature flags into different "profiles". We want to have an "alpha" and a "beta" profile that can be congifured to have different feature flags flipped on or off. We also want to be able to gradually roll out new features to our user base instead. Therefore we also want two profiles called "pilots" and "rest" where the idea is to randomly have 30% or users be "pilots" and get to try some new features before the "rest" 70%. By doing this we can run some usabilitiy studies on the "pilot" group and see if new features seems appriciated before pushing them out to all our users.
 
 ## Advanced view
 ![Sketch](assets/sketch3.png)

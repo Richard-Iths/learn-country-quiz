@@ -157,3 +157,52 @@ code {
 	border-radius: 6px;
 	text-align: center;
 }
+
+.advance-feature-flags {
+	display: grid;
+	place-items: center;
+}
+.advance-feature-flags__table {
+	min-width: 70vw;
+	border:2px solid #000;
+	border-collapse: collapse;
+}
+.advance-feature-flags__table thead{
+	text-align: center;
+}
+.advance-feature-flags__table thead th{
+	padding: 1rem 1.5rem;
+}
+.advance-feature-flags__table tbody{
+	text-align: center;
+}
+.advance-feature-flags__table td{
+	padding: 1rem 1.5rem;
+	border:2px solid #340447;
+}
+
+.table-on {
+	background-color: var(--green);
+}
+.table-off {
+	background-color: lightgrey;
+}
+.table-clickable {
+	cursor: pointer;
+}
+.table-clickable:hover {
+	background-color: peachpuff;
+}
+
+.footer-color-alpha {
+	background-color: var(--blue);
+}
+.footer-color-beta {
+	background-color: var(--orange);
+}
+.footer-color-pilot {
+	background-color: var(--red);
+}
+.footer-color-rest {
+	background-color: var(--green);
+}
