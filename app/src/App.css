@@ -244,3 +244,38 @@
 .CookieChoice {
   background-color: black;
 }
+
+.feature__background-wrapper{
+	display: flex;
+	gap: .5rem;	
+}
+
+.feature__background{
+	height: 2rem;
+	width: 2rem;
+}
+.feature__background:hover{
+	transform: scale(1.2);
+	transition: all 1s ease-in;
+	transform: rotate(360deg);
+}
+.feature--background-orange{
+	background-color: var(--orange);
+}
+.feature--background-blue{
+	background-color: var(--blue);
+}
+.feature--background-green{
+	background-color: var(--green);
+}
+.feature--background-red{
+	background-color: var(--red);
+}
+
+.feature--current-active{
+	border: 1.5px solid black;
+}
+
+.feature--current-inactive{
+	opacity: 50%;
+}

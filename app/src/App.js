@@ -571,7 +571,7 @@ const AdvanceSetupPage = () => {
       const snapshotValues = Object.entries(snapshot.val());
       setFeatureFlagsHeaders(Object.values(snapshot.val().labels));
       setFeatureFlagsBodies(
-        snapshotValues.filter((snap) => snap[0] !== "labels")
+        snapshotValues.filter((snap) => snap[0] !== "labels" && snap[0] !== "backgrounds")
       );
     }
   }, [snapshot]);
@@ -592,6 +592,22 @@ const AdvanceSetupPage = () => {
     };
     await update(ref(db), updates);
   };
+
+  const changeFeatureBackground = async (e) => {
+    const target = e.target;
+    const [key,value] = target.id.split("-")
+    const snap = snapshot.val()
+    const data = {...snap, [key]: {
+      ...snap[key], 
+      background:value
+    }}
+    const updates = {};
+    updates[`/feature_flags/`] = {
+      ...data,
+    };
+    await update(ref(db), updates);
+  }
+
 
   return (
     <section className="advance-feature-flags">
@@ -618,19 +634,24 @@ const AdvanceSetupPage = () => {
                     return value ? (
                       <td
                         onClick={(e) => {
-                          if (key === "alpha" || key === "beta") {
+                          if ( k !== "background") {
                             toggleFeature(e);
                           }
                         }}
                         key={index}
                         id={`${key}-${k}`}
-                        className={`table-on ${
-                          key === "alpha" || key === "beta"
+                        className={`${k !== "background" && "table-on"} ${
+                           k !== "background"
                             ? "table-clickable"
                             : ""
                         }`}
                       >
-                        {typeof value === "string" ? value : "On"}
+                        { k === "background" ? (<div className="feature__background-wrapper">
+                          {snapshot.val().backgrounds.map(item =>{
+                            return ( <div key={`${key}-${k}-${item}`} onClick={changeFeatureBackground} id={`${key}-${item}`} className={`feature__background feature--background-${item}
+                            ${value === item ? "feature--current-active" : "feature--current-inactive"}`}></div>)
+                          } )
+                        }</div>) : "On"}
                       </td>
                     ) : (
                       <td
