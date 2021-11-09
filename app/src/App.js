@@ -13,7 +13,10 @@ import "./featureFlags";
 import { initializeApp } from "firebase/app";
 import { ref, getDatabase, set, update } from "firebase/database";
 import { useObject } from "react-firebase-hooks/database";
-import { InitAnalytics, LogAnalyzer } from "./analytics";
+import { InitAnalytics, LogAnalyzer, InitLogRocket, LogRocketIdentify } from "./analytics";
+
+
+
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvxyz", 5);
 
@@ -35,6 +38,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 let analytics = null;
+
+let logrocket = null;
 
 const db = getDatabase(app);
 
@@ -62,6 +67,9 @@ function App() {
       }
     }
   }, []);
+
+
+
 
   return (
     <CookieBanner>
@@ -103,10 +111,20 @@ const StartPage = () => {
   const { improvedFrontPageFlags } = JSON.parse(
     localStorage.getItem("features")
   );
+  React.useEffect(() => {
+    if (!loading) {
+      InitLogRocket()
+      snapshot.val() && LogRocketIdentify("playing game", { gameId: snapshot.val() })
+    }
+  }, [snapshot])
+
   if (loading) return <div className="fw6 fs5">Loading...</div>;
   const nextGame = snapshot.val();
 
+
+
   const play = async () => {
+
     if (analytics) {
       LogAnalyzer(analytics, "clicked Play");
     }
@@ -481,6 +499,31 @@ const CookieExplanation = ({ onClickHandler }) => {
                 </p>
               </div>
             </li>
+            <li>
+              <div>
+                <h3>LogRocket</h3>
+                <p>
+                  Google Analytics is a web analytics service that provides
+                  statistics and basic analytical tools for search engine
+                  optimization (SEO) and marketing purposes....Google Analytics
+                  is used to track website performance and collect visitor
+                  insights.
+                </p>
+                <p>
+                  <ul>
+                    <li>
+                      <p>_ga 2 years Used to distinguish users.</p>
+                    </li>
+                    <li>
+                      <p>
+                        ga {"<container-id>"} 2 years Used to persist session
+                        state.
+                      </p>
+                    </li>
+                  </ul>
+                </p>
+              </div>
+            </li>
           </ul>
         </div>
       </div>
@@ -510,8 +553,12 @@ const CookieBanner = ({ children }) => {
 
   React.useEffect(() => {
     localStorage.setItem("agreement", JSON.stringify(agreement));
-    analytics = agreement.statistic && agreement.consent && InitAnalytics(app);
+    if (agreement.statistic && agreement.consent) {
+      analytics = InitAnalytics(app);
+    }
   }, [agreement]);
+
+
 
   return (
     <>

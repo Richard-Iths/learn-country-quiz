@@ -1,9 +1,13 @@
 import { getAnalytics, logEvent } from "firebase/analytics";
+import LogRocket from 'logrocket';
+
+
+
 
 (() => {
 
   if (!localStorage.getItem("agreement")) {
-    localStorage.setItem("agreement", JSON.stringify({ consent: false, statistic: true, necessary: true }))
+    localStorage.setItem("agreement", JSON.stringify({ consent: false, statistic: true, necessary: true, logrocket: true }))
 
 
   }
@@ -17,5 +21,22 @@ export const LogAnalyzer = (analytics, event, data) => {
   const { statistic, consent } = JSON.parse(localStorage.getItem("agreement"))
   if (statistic && consent) {
     logEvent(analytics, event, data)
+  }
+}
+
+export const InitLogRocket = () => {
+  if (localStorage.getItem("agreement")) {
+    const { statistic } = JSON.parse(localStorage.getItem("agreement"))
+    if (statistic) {
+      LogRocket.init('vgluue/git-gud');
+    }
+  }
+}
+export const LogRocketIdentify = (e, o) => {
+  if (localStorage.getItem("agreement")) {
+    const { statistic } = JSON.parse(localStorage.getItem("agreement"))
+    if (statistic) {
+      LogRocket.identify(e, o);
+    }
   }
 }
