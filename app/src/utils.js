@@ -11,7 +11,7 @@ export const randomQuestions = () => {
 		questions[i] = { correct: correctAnswer, alternatives: {} }
 		const questionsAlternative = [...countriesArr]
 		const alternatives = [correctAnswer]
-		for (let r = 1; r <= 4; r++) {
+		for (let r = 1; r <= 3; r++) {
 			const randomAlternative = Math.floor(Math.random() * countriesArr.length - 1)
 			alternatives.push(questionsAlternative.splice(randomAlternative, 1).join().toLowerCase())
 		}

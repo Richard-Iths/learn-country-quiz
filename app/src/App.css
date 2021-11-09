@@ -27,6 +27,24 @@
 	align-items: center;
 }
 
+
+.scoreboard__wrapper {
+	font-family: cursive;
+	display: grid;
+	place-items: center;
+}
+
+.scoreboard {
+	display: flex;
+	justify-content: space-between;
+	min-width: 20rem;
+}
+
+.scoreboard span {
+	margin-left: 1.5rem;
+	color: red;
+}
+
 .footer {
 	/* background: var(--blue); */
 	height: 10vh;
@@ -94,6 +112,20 @@
 	position: relative;
 }
 
+.grid-alternatives {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	max-width: 900px;
+}
+
+.grid-alt {
+	display: grid;
+	place-items: center;
+	max-width: 400px;
+	min-height: 150px;
+}
+
 .alt-green {
 	color: #ffffff;
 	background: #38B134;
@@ -152,11 +184,6 @@
 	transform: translate(-50%, -50%);
 
 }
-
-/* .CookieBanner {
-	display: flex;
-	flex-direction: column;
-} */
 
 .CookieWrapper{
 	position: relative;

@@ -13,10 +13,9 @@ export const InitAnalytics = (app) => {
   return getAnalytics(app)
 
 }
-export const LogAnalyzer = (analytics, event) => {
+export const LogAnalyzer = (analytics, event, data) => {
   const { statistic, consent } = JSON.parse(localStorage.getItem("agreement"))
   if (statistic && consent) {
-    console.log("gucci");
-    logEvent(analytics, event)
+    logEvent(analytics, event, data)
   }
 }

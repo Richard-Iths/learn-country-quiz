@@ -41,16 +41,26 @@ const db = getDatabase(app);
 function App() {
   const { improvedHeader } = JSON.parse(localStorage.getItem("features"));
   const [featureProfile, setFeatureProfile] = React.useState(null);
+  const [snapshot, loading, error] = useObject(ref(db, "feature_flags"));
+
+
+  React.useEffect(() => {
+    if (!loading) {
+      const { profile } = JSON.parse(localStorage.getItem('profile'))
+      const snap = snapshot.val()
+      setFeatureProfile(snap[profile])
+    }
+  }, [snapshot])
+
   React.useEffect(() => {
     if (!localStorage.getItem("profile")) {
       const random = Math.floor(Math.random() * 10);
       if (random > 3) {
         localStorage.setItem("profile", JSON.stringify({ profile: "rest" }));
       } else {
-        localStorage.setItem("profile", JSON.stringify({ profile: "pilot" }));
+        localStorage.setItem("profile", JSON.stringify({ profile: "pilots" }));
       }
     }
-    setFeatureProfile(JSON.parse(localStorage.getItem("profile")));
   }, []);
 
   return (
@@ -72,15 +82,15 @@ function App() {
           <Route path="/game/:gameId/:playerId">
             {(params) => {
               return (
-                <GamePage gameId={params.gameId} playerId={params.playerId} />
+                <GamePage featureProfile={featureProfile} gameId={params.gameId} playerId={params.playerId} />
               );
             }}
           </Route>
         </div>
+        <LatestScore />
         <div
-          className={`footer ${
-            featureProfile ? "footer-color-" + featureProfile.profile : ""
-          }`}
+          className={`footer ${featureProfile ? "footer-color-" + featureProfile.profile : ""
+            }`}
         ></div>
       </div>
     </CookieBanner>
@@ -201,7 +211,30 @@ const StartPage = () => {
   );
 };
 
-const GamePage = ({ gameId, playerId }) => {
+
+const LatestScore = () => {
+
+  const [snapshot, loading, error] = useObject(ref(db, `games`));
+  const [latestGames, setLatestGames] = React.useState([])
+
+  React.useEffect(() => {
+    if (!loading) {
+      const finishedGames = Object.values(snapshot.val()).filter((game) => game.status === 'finished').reverse().slice(0, 6)
+      console.log(finishedGames);
+      setLatestGames([...finishedGames])
+    }
+  }, [snapshot])
+
+  return (
+    <div className="scoreboard__wrapper"> <h2>Latest games: 🍆</h2>
+      {
+        latestGames.map((game, index) => (<div className="scoreboard" key={index}><h3>Player 1: <span>{game.score.player1}</span></h3> <h3>Player 2: <span>{game.score.player2}</span></h3></div>))
+      }
+    </div>
+  )
+}
+
+const GamePage = ({ gameId, playerId, featureProfile }) => {
   const [snapshot, loading, error] = useObject(ref(db, `games/${gameId}`));
   const [location, setLocation] = useLocation();
 
@@ -216,7 +249,7 @@ const GamePage = ({ gameId, playerId }) => {
   };
 
   if (game && game.status === "playing")
-    return <QuestionPage gameId={gameId} playerId={playerId} />;
+    return <QuestionPage {...featureProfile} gameId={gameId} playerId={playerId} />;
   if (game && game.status === "finished")
     return <ResultsPage gameId={gameId} playerId={playerId} />;
 
@@ -233,10 +266,23 @@ const GamePage = ({ gameId, playerId }) => {
       )}
       countries
     </div>
+
   );
 };
 
-const QuestionPage = ({ gameId, playerId }) => {
+const QuestionPage = ({ gameId, playerId, grid }) => {
+  const [myPerformance, setMyPerformance] = React.useState({})
+  React.useEffect(() => {
+    if (!myPerformance.t1) {
+      setMyPerformance({ t1: performance.now() })
+    }
+    if (myPerformance.t1 && myPerformance.t2) {
+      const res = (myPerformance.t2 - myPerformance.t1) / 1000;
+      console.log(res);
+      grid ? LogAnalyzer(analytics, 'answer-time-grid', { res }) : LogAnalyzer(analytics, 'answer-time-stacked', { res })
+    }
+    console.log(myPerformance)
+  }, [myPerformance])
   const [snapshot, loading, error] = useObject(ref(db, `games/${gameId}`));
   //feature flag
   const { improvedScoring } = JSON.parse(localStorage.getItem("features"));
@@ -269,6 +315,7 @@ const QuestionPage = ({ gameId, playerId }) => {
 
     if (game.currentQuestion < Object.values(game.questions).length) {
       await utils.sleep(3000);
+      setMyPerformance({ t1: performance.now() })
       const updates2 = {};
       updates2[`/games/${gameId}/currentQuestion`] =
         parseInt(game.currentQuestion) + 1;
@@ -286,7 +333,7 @@ const QuestionPage = ({ gameId, playerId }) => {
       <div className="f32">
         <div className={`flag ${question.correct}`}></div>
       </div>
-      <div className="alternatives">
+      <div className={`alternatives ${grid && "grid-alternatives"}`}>
         {Object.entries(question.alternatives).map(([k, countryCode]) => {
           let correct = null;
           let youOrOpponent = false;
@@ -300,15 +347,19 @@ const QuestionPage = ({ gameId, playerId }) => {
           }
           return (
             <div
-              className={`button alt ${correct && "alt-green"} ${
-                correct === false && "alt-red"
-              }`}
+              className={`button alt ${correct && "alt-green"} ${correct === false && "alt-red"
+                } ${grid && "grid-alt"}`}
               key={countryCode}
               title={countryCode}
-              onClick={() => answer(countryCode)}
+              onClick={() => {
+                setMyPerformance({ ...myPerformance, t2: performance.now() })
+                answer(countryCode)
+              }
+
+              }
             >
               {countries[countryCode.toUpperCase()]}
-              {}
+              { }
               {youOrOpponent && (
                 <div className="alt-label">{youOrOpponent}</div>
               )}
@@ -595,12 +646,14 @@ const AdvanceSetupPage = () => {
 
   const changeFeatureBackground = async (e) => {
     const target = e.target;
-    const [key,value] = target.id.split("-")
+    const [key, value] = target.id.split("-")
     const snap = snapshot.val()
-    const data = {...snap, [key]: {
-      ...snap[key], 
-      background:value
-    }}
+    const data = {
+      ...snap, [key]: {
+        ...snap[key],
+        background: value
+      }
+    }
     const updates = {};
     updates[`/feature_flags/`] = {
       ...data,
@@ -634,42 +687,36 @@ const AdvanceSetupPage = () => {
                     return value ? (
                       <td
                         onClick={(e) => {
-                          if ( k !== "background") {
+                          if (k !== "background") {
                             toggleFeature(e);
                           }
                         }}
                         key={index}
                         id={`${key}-${k}`}
-                        className={`${k !== "background" && "table-on"} ${
-                           k !== "background"
-                            ? "table-clickable"
-                            : ""
-                        }`}
+                        className={`${k !== "background" && "table-on"} ${k !== "background"
+                          ? "table-clickable"
+                          : ""
+                          }`}
                       >
-                        { k === "background" ? (<div className="feature__background-wrapper">
-                          {snapshot.val().backgrounds.map(item =>{
-                            return ( <div key={`${key}-${k}-${item}`} onClick={changeFeatureBackground} id={`${key}-${item}`} className={`feature__background feature--background-${item}
+                        {k === "background" ? (<div className="feature__background-wrapper">
+                          {snapshot.val().backgrounds.map(item => {
+                            return (<div key={`${key}-${k}-${item}`} onClick={changeFeatureBackground} id={`${key}-${item}`} className={`feature__background feature--background-${item}
                             ${value === item ? "feature--current-active" : "feature--current-inactive"}`}></div>)
-                          } )
-                        }</div>) : "On"}
+                          })
+                          }</div>) : "On"}
                       </td>
                     ) : (
                       <td
                         key={index}
                         id={`${key}-${k}`}
                         onClick={(e) => {
-                          if (
-                            key === "alpha" ||
-                            (key === "beta" && toggleFeature)
-                          ) {
-                            toggleFeature(e);
-                          }
+                          toggleFeature(e);
+
                         }}
-                        className={`table-off ${
-                          key === "alpha" || key === "beta"
-                            ? "table-clickable"
-                            : ""
-                        }`}
+                        className={`table-off ${key === "alpha" || key === "beta"
+                          ? "table-clickable"
+                          : ""
+                          }`}
                       >
                         Off
                       </td>
