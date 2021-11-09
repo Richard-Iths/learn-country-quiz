@@ -13,7 +13,10 @@ import "./featureFlags";
 import { initializeApp } from "firebase/app";
 import { ref, getDatabase, set, update } from "firebase/database";
 import { useObject } from "react-firebase-hooks/database";
-import { InitAnalytics, LogAnalyzer } from "./analytics";
+import { InitAnalytics, LogAnalyzer, InitLogRocket, LogRocketIdentify } from "./analytics";
+
+
+
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvxyz", 5);
 
@@ -36,6 +39,8 @@ const app = initializeApp(firebaseConfig);
 
 let analytics = null;
 
+let logrocket = null;
+
 const db = getDatabase(app);
 
 function App() {
@@ -52,6 +57,9 @@ function App() {
     }
     setFeatureProfile(JSON.parse(localStorage.getItem("profile")));
   }, []);
+
+
+
 
   return (
     <CookieBanner>
@@ -78,9 +86,8 @@ function App() {
           </Route>
         </div>
         <div
-          className={`footer ${
-            featureProfile ? "footer-color-" + featureProfile.profile : ""
-          }`}
+          className={`footer ${featureProfile ? "footer-color-" + featureProfile.profile : ""
+            }`}
         ></div>
       </div>
     </CookieBanner>
@@ -93,10 +100,20 @@ const StartPage = () => {
   const { improvedFrontPageFlags } = JSON.parse(
     localStorage.getItem("features")
   );
+  React.useEffect(() => {
+    if(!loading){
+    InitLogRocket()
+     snapshot.val() && LogRocketIdentify("playing game", {gameId:snapshot.val()})
+    }
+  }, [snapshot])
+
   if (loading) return <div className="fw6 fs5">Loading...</div>;
   const nextGame = snapshot.val();
 
+
+
   const play = async () => {
+
     if (analytics) {
       LogAnalyzer(analytics, "clicked Play");
     }
@@ -300,15 +317,14 @@ const QuestionPage = ({ gameId, playerId }) => {
           }
           return (
             <div
-              className={`button alt ${correct && "alt-green"} ${
-                correct === false && "alt-red"
-              }`}
+              className={`button alt ${correct && "alt-green"} ${correct === false && "alt-red"
+                }`}
               key={countryCode}
               title={countryCode}
               onClick={() => answer(countryCode)}
             >
               {countries[countryCode.toUpperCase()]}
-              {}
+              { }
               {youOrOpponent && (
                 <div className="alt-label">{youOrOpponent}</div>
               )}
@@ -430,6 +446,31 @@ const CookieExplanation = ({ onClickHandler }) => {
                 </p>
               </div>
             </li>
+            <li>
+              <div>
+                <h3>LogRocket</h3>
+                <p>
+                  Google Analytics is a web analytics service that provides
+                  statistics and basic analytical tools for search engine
+                  optimization (SEO) and marketing purposes....Google Analytics
+                  is used to track website performance and collect visitor
+                  insights.
+                </p>
+                <p>
+                  <ul>
+                    <li>
+                      <p>_ga 2 years Used to distinguish users.</p>
+                    </li>
+                    <li>
+                      <p>
+                        ga {"<container-id>"} 2 years Used to persist session
+                        state.
+                      </p>
+                    </li>
+                  </ul>
+                </p>
+              </div>
+            </li>
           </ul>
         </div>
       </div>
@@ -459,8 +500,12 @@ const CookieBanner = ({ children }) => {
 
   React.useEffect(() => {
     localStorage.setItem("agreement", JSON.stringify(agreement));
-    analytics = agreement.statistic && agreement.consent && InitAnalytics(app);
+    if(agreement.statistic && agreement.consent){
+      analytics = InitAnalytics(app);
+    }  
   }, [agreement]);
+
+
 
   return (
     <>
@@ -595,12 +640,14 @@ const AdvanceSetupPage = () => {
 
   const changeFeatureBackground = async (e) => {
     const target = e.target;
-    const [key,value] = target.id.split("-")
+    const [key, value] = target.id.split("-")
     const snap = snapshot.val()
-    const data = {...snap, [key]: {
-      ...snap[key], 
-      background:value
-    }}
+    const data = {
+      ...snap, [key]: {
+        ...snap[key],
+        background: value
+      }
+    }
     const updates = {};
     updates[`/feature_flags/`] = {
       ...data,
@@ -634,24 +681,23 @@ const AdvanceSetupPage = () => {
                     return value ? (
                       <td
                         onClick={(e) => {
-                          if ( k !== "background") {
+                          if (k !== "background") {
                             toggleFeature(e);
                           }
                         }}
                         key={index}
                         id={`${key}-${k}`}
-                        className={`${k !== "background" && "table-on"} ${
-                           k !== "background"
-                            ? "table-clickable"
-                            : ""
-                        }`}
+                        className={`${k !== "background" && "table-on"} ${k !== "background"
+                          ? "table-clickable"
+                          : ""
+                          }`}
                       >
-                        { k === "background" ? (<div className="feature__background-wrapper">
-                          {snapshot.val().backgrounds.map(item =>{
-                            return ( <div key={`${key}-${k}-${item}`} onClick={changeFeatureBackground} id={`${key}-${item}`} className={`feature__background feature--background-${item}
+                        {k === "background" ? (<div className="feature__background-wrapper">
+                          {snapshot.val().backgrounds.map(item => {
+                            return (<div key={`${key}-${k}-${item}`} onClick={changeFeatureBackground} id={`${key}-${item}`} className={`feature__background feature--background-${item}
                             ${value === item ? "feature--current-active" : "feature--current-inactive"}`}></div>)
-                          } )
-                        }</div>) : "On"}
+                          })
+                          }</div>) : "On"}
                       </td>
                     ) : (
                       <td
@@ -665,11 +711,10 @@ const AdvanceSetupPage = () => {
                             toggleFeature(e);
                           }
                         }}
-                        className={`table-off ${
-                          key === "alpha" || key === "beta"
-                            ? "table-clickable"
-                            : ""
-                        }`}
+                        className={`table-off ${key === "alpha" || key === "beta"
+                          ? "table-clickable"
+                          : ""
+                          }`}
                       >
                         Off
                       </td>
