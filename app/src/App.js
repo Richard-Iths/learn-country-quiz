@@ -13,10 +13,12 @@ import "./featureFlags";
 import { initializeApp } from "firebase/app";
 import { ref, getDatabase, set, update } from "firebase/database";
 import { useObject } from "react-firebase-hooks/database";
-import { InitAnalytics, LogAnalyzer, InitLogRocket, LogRocketIdentify } from "./analytics";
-
-
-
+import {
+  InitAnalytics,
+  LogAnalyzer,
+  InitLogRocket,
+  LogRocketIdentify,
+} from "./analytics";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvxyz", 5);
 
@@ -39,8 +41,6 @@ const app = initializeApp(firebaseConfig);
 
 let analytics = null;
 
-let logrocket = null;
-
 const db = getDatabase(app);
 
 function App() {
@@ -48,14 +48,13 @@ function App() {
   const [featureProfile, setFeatureProfile] = React.useState(null);
   const [snapshot, loading, error] = useObject(ref(db, "feature_flags"));
 
-
   React.useEffect(() => {
     if (!loading) {
-      const { profile } = JSON.parse(localStorage.getItem('profile'))
-      const snap = snapshot.val()
-      setFeatureProfile(snap[profile])
+      const { profile } = JSON.parse(localStorage.getItem("profile"));
+      const snap = snapshot.val();
+      setFeatureProfile(snap[profile]);
     }
-  }, [snapshot])
+  }, [snapshot]);
 
   React.useEffect(() => {
     if (!localStorage.getItem("profile")) {
@@ -68,9 +67,6 @@ function App() {
     }
   }, []);
 
-
-
-
   return (
     <CookieBanner>
       <div className="app">
@@ -79,7 +75,7 @@ function App() {
         </div>
         <div className="middle">
           <Route path="/">
-            <StartPage />
+            <StartPage {...featureProfile} />
           </Route>
           <Route path="/setup">
             <SetupPage />
@@ -90,22 +86,26 @@ function App() {
           <Route path="/game/:gameId/:playerId">
             {(params) => {
               return (
-                <GamePage featureProfile={featureProfile} gameId={params.gameId} playerId={params.playerId} />
+                <GamePage
+                  featureProfile={featureProfile}
+                  gameId={params.gameId}
+                  playerId={params.playerId}
+                />
               );
             }}
           </Route>
         </div>
-        <LatestScore />
         <div
-          className={`footer ${featureProfile ? "footer-color-" + featureProfile.profile : ""
-            }`}
+          className={`footer ${
+            featureProfile ? "footer-color-" + featureProfile.profile : ""
+          }`}
         ></div>
       </div>
     </CookieBanner>
   );
 }
 
-const StartPage = () => {
+const StartPage = ({ latest_game }) => {
   const [snapshot, loading, error] = useObject(ref(db, "nextGame"));
   const [location, setLocation] = useLocation();
   const { improvedFrontPageFlags } = JSON.parse(
@@ -113,18 +113,16 @@ const StartPage = () => {
   );
   React.useEffect(() => {
     if (!loading) {
-      InitLogRocket()
-      snapshot.val() && LogRocketIdentify("playing game", { gameId: snapshot.val() })
+      InitLogRocket();
+      snapshot.val() &&
+        LogRocketIdentify("playing game", { gameId: snapshot.val() });
     }
-  }, [snapshot])
+  }, [snapshot]);
 
   if (loading) return <div className="fw6 fs5">Loading...</div>;
   const nextGame = snapshot.val();
 
-
-
   const play = async () => {
-
     if (analytics) {
       LogAnalyzer(analytics, "clicked Play");
     }
@@ -225,32 +223,43 @@ const StartPage = () => {
       <div className="button btn-square" onClick={play}>
         Play
       </div>
+      {latest_game && <LatestScore />}
     </div>
   );
 };
 
-
 const LatestScore = () => {
-
   const [snapshot, loading, error] = useObject(ref(db, `games`));
-  const [latestGames, setLatestGames] = React.useState([])
+  const [latestGames, setLatestGames] = React.useState([]);
 
   React.useEffect(() => {
     if (!loading) {
-      const finishedGames = Object.values(snapshot.val()).filter((game) => game.status === 'finished').reverse().slice(0, 6)
+      const finishedGames = Object.values(snapshot.val())
+        .filter((game) => game.status === "finished")
+        .reverse()
+        .slice(0, 6);
       console.log(finishedGames);
-      setLatestGames([...finishedGames])
+      setLatestGames([...finishedGames]);
     }
-  }, [snapshot])
+  }, [snapshot]);
 
   return (
-    <div className="scoreboard__wrapper"> <h2>Latest games: 🍆</h2>
-      {
-        latestGames.map((game, index) => (<div className="scoreboard" key={index}><h3>Player 1: <span>{game.score.player1}</span></h3> <h3>Player 2: <span>{game.score.player2}</span></h3></div>))
-      }
+    <div className="scoreboard__wrapper">
+      {" "}
+      <h2>Latest games: 🍆</h2>
+      {latestGames.map((game, index) => (
+        <div className="scoreboard" key={index}>
+          <h3>
+            Player 1: <span>{game.score.player1}</span>
+          </h3>{" "}
+          <h3>
+            Player 2: <span>{game.score.player2}</span>
+          </h3>
+        </div>
+      ))}
     </div>
-  )
-}
+  );
+};
 
 const GamePage = ({ gameId, playerId, featureProfile }) => {
   const [snapshot, loading, error] = useObject(ref(db, `games/${gameId}`));
@@ -267,7 +276,9 @@ const GamePage = ({ gameId, playerId, featureProfile }) => {
   };
 
   if (game && game.status === "playing")
-    return <QuestionPage {...featureProfile} gameId={gameId} playerId={playerId} />;
+    return (
+      <QuestionPage {...featureProfile} gameId={gameId} playerId={playerId} />
+    );
   if (game && game.status === "finished")
     return <ResultsPage gameId={gameId} playerId={playerId} />;
 
@@ -284,23 +295,24 @@ const GamePage = ({ gameId, playerId, featureProfile }) => {
       )}
       countries
     </div>
-
   );
 };
 
 const QuestionPage = ({ gameId, playerId, grid }) => {
-  const [myPerformance, setMyPerformance] = React.useState({})
+  const [myPerformance, setMyPerformance] = React.useState({});
   React.useEffect(() => {
     if (!myPerformance.t1) {
-      setMyPerformance({ t1: performance.now() })
+      setMyPerformance({ t1: performance.now() });
     }
     if (myPerformance.t1 && myPerformance.t2) {
       const res = (myPerformance.t2 - myPerformance.t1) / 1000;
       console.log(res);
-      grid ? LogAnalyzer(analytics, 'answer-time-grid', { res }) : LogAnalyzer(analytics, 'answer-time-stacked', { res })
+      grid
+        ? LogAnalyzer(analytics, "answer-time-grid", { res })
+        : LogAnalyzer(analytics, "answer-time-stacked", { res });
     }
-    console.log(myPerformance)
-  }, [myPerformance])
+    console.log(myPerformance);
+  }, [myPerformance]);
   const [snapshot, loading, error] = useObject(ref(db, `games/${gameId}`));
   //feature flag
   const { improvedScoring } = JSON.parse(localStorage.getItem("features"));
@@ -333,7 +345,7 @@ const QuestionPage = ({ gameId, playerId, grid }) => {
 
     if (game.currentQuestion < Object.values(game.questions).length) {
       await utils.sleep(3000);
-      setMyPerformance({ t1: performance.now() })
+      setMyPerformance({ t1: performance.now() });
       const updates2 = {};
       updates2[`/games/${gameId}/currentQuestion`] =
         parseInt(game.currentQuestion) + 1;
@@ -365,19 +377,18 @@ const QuestionPage = ({ gameId, playerId, grid }) => {
           }
           return (
             <div
-              className={`button alt ${correct && "alt-green"} ${correct === false && "alt-red"
-                } ${grid && "grid-alt"}`}
+              className={`button alt ${correct && "alt-green"} ${
+                correct === false && "alt-red"
+              } ${grid && "grid-alt"}`}
               key={countryCode}
               title={countryCode}
               onClick={() => {
-                setMyPerformance({ ...myPerformance, t2: performance.now() })
-                answer(countryCode)
-              }
-
-              }
+                setMyPerformance({ ...myPerformance, t2: performance.now() });
+                answer(countryCode);
+              }}
             >
               {countries[countryCode.toUpperCase()]}
-              { }
+              {}
               {youOrOpponent && (
                 <div className="alt-label">{youOrOpponent}</div>
               )}
@@ -468,63 +479,71 @@ const Tie = ({ you, opponent }) => {
 };
 
 const CookieExplanation = ({ onClickHandler }) => {
+  const [snapshot, loading, error] = useObject(ref(db, `cookie_processors`));
+  const [snapshotSP, loadingSP, errorSP] = useObject(ref(db, `sub_processors`));
+  const [cookieProcessor, setCookieProcessor] = React.useState(null);
+  const [subProcessor, setSubProcessor] = React.useState(null);
+  React.useEffect(() => {
+    if (!loading) {
+      const snap = snapshot.val();
+      setCookieProcessor({ ...snap });
+    }
+  }, [snapshot]);
+
+  React.useEffect(() => {
+    if (!loadingSP) {
+      const snap = snapshotSP.val();
+      setSubProcessor([...snap]);
+    }
+  }, [snapshotSP]);
   return (
     <div onClick={onClickHandler} className="cookie-explanation">
-      <div className="cookie-wrapper">
-        <div className="necessary"></div>
-        <div className="statistic">
-          <ul>
-            <li>
-              <div>
-                <h3>Google analytics</h3>
-                <p>
-                  Google Analytics is a web analytics service that provides
-                  statistics and basic analytical tools for search engine
-                  optimization (SEO) and marketing purposes....Google Analytics
-                  is used to track website performance and collect visitor
-                  insights.
-                </p>
-                <p>
-                  <ul>
-                    <li>
-                      <p>_ga 2 years Used to distinguish users.</p>
-                    </li>
-                    <li>
-                      <p>
-                        ga {"<container-id>"} 2 years Used to persist session
-                        state.
-                      </p>
-                    </li>
-                  </ul>
-                </p>
-              </div>
-            </li>
-            <li>
-              <div>
-                <h3>LogRocket</h3>
-                <p>
-                  Google Analytics is a web analytics service that provides
-                  statistics and basic analytical tools for search engine
-                  optimization (SEO) and marketing purposes....Google Analytics
-                  is used to track website performance and collect visitor
-                  insights.
-                </p>
-                <p>
-                  <ul>
-                    <li>
-                      <p>_ga 2 years Used to distinguish users.</p>
-                    </li>
-                    <li>
-                      <p>
-                        ga {"<container-id>"} 2 years Used to persist session
-                        state.
-                      </p>
-                    </li>
-                  </ul>
-                </p>
-              </div>
-            </li>
-          </ul>
+      <div className="cookie-processor__wrapper">
+        {cookieProcessor &&
+          Object.entries(cookieProcessor).map((processor, index) => {
+            const [key, value] = processor;
+            return (
+              <article className="cookie-processor" key={index}>
+                <div className="cookie-processor__header">
+                  <h3>{key}</h3>
+                </div>
+                {value.map(({ processor }, index) => (
+                  <div className="cookie-processor__content" key={index}>
+                    <div className="cookie-processor__content-wrapper">
+                      <h4>{processor.title}</h4>
+                      <p>{processor.description}</p>
+                    </div>
+
+                    <div className="cookie-processor__content">
+                      {processor.cookies &&
+                        processor.cookies.map((cookie, index) => (
+                          <div
+                            className="cookie-processor__content-wrapper"
+                            key={index}
+                          >
+                            <h5>{cookie.cookie_name}</h5>
+                            <p>{cookie.description}</p>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                ))}
+              </article>
+            );
+          })}
+        <div className="cookie-sub-processors">
+          <h2>Sub Processors</h2>
+          {subProcessor &&
+            subProcessor.map((processor, index) => {
+              return (
+                index !== 0 && (
+                  <div className="cookie-sub-processors__wrapper" key={index}>
+                    <h4>{processor.title}</h4>
+                    <p>{processor.description}</p>
+                  </div>
+                )
+              );
+            })}
         </div>
       </div>
     </div>
@@ -557,8 +576,6 @@ const CookieBanner = ({ children }) => {
       analytics = InitAnalytics(app);
     }
   }, [agreement]);
-
-
 
   return (
     <>
@@ -669,7 +686,9 @@ const AdvanceSetupPage = () => {
       const snapshotValues = Object.entries(snapshot.val());
       setFeatureFlagsHeaders(Object.values(snapshot.val().labels));
       setFeatureFlagsBodies(
-        snapshotValues.filter((snap) => snap[0] !== "labels" && snap[0] !== "backgrounds")
+        snapshotValues.filter(
+          (snap) => snap[0] !== "labels" && snap[0] !== "backgrounds"
+        )
       );
     }
   }, [snapshot]);
@@ -693,21 +712,21 @@ const AdvanceSetupPage = () => {
 
   const changeFeatureBackground = async (e) => {
     const target = e.target;
-    const [key, value] = target.id.split("-")
-    const snap = snapshot.val()
+    const [key, value] = target.id.split("-");
+    const snap = snapshot.val();
     const data = {
-      ...snap, [key]: {
+      ...snap,
+      [key]: {
         ...snap[key],
-        background: value
-      }
-    }
+        background: value,
+      },
+    };
     const updates = {};
     updates[`/feature_flags/`] = {
       ...data,
     };
     await update(ref(db), updates);
-  }
-
+  };
 
   return (
     <section className="advance-feature-flags">
@@ -740,17 +759,31 @@ const AdvanceSetupPage = () => {
                         }}
                         key={index}
                         id={`${key}-${k}`}
-                        className={`${k !== "background" && "table-on"} ${k !== "background"
-                          ? "table-clickable"
-                          : ""
-                          }`}
+                        className={`${k !== "background" && "table-on"} ${
+                          k !== "background" ? "table-clickable" : ""
+                        }`}
                       >
-                        {k === "background" ? (<div className="feature__background-wrapper">
-                          {snapshot.val().backgrounds.map(item => {
-                            return (<div key={`${key}-${k}-${item}`} onClick={changeFeatureBackground} id={`${key}-${item}`} className={`feature__background feature--background-${item}
-                            ${value === item ? "feature--current-active" : "feature--current-inactive"}`}></div>)
-                          })
-                          }</div>) : "On"}
+                        {k === "background" ? (
+                          <div className="feature__background-wrapper">
+                            {snapshot.val().backgrounds.map((item) => {
+                              return (
+                                <div
+                                  key={`${key}-${k}-${item}`}
+                                  onClick={changeFeatureBackground}
+                                  id={`${key}-${item}`}
+                                  className={`feature__background feature--background-${item}
+                            ${
+                              value === item
+                                ? "feature--current-active"
+                                : "feature--current-inactive"
+                            }`}
+                                ></div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          "On"
+                        )}
                       </td>
                     ) : (
                       <td
@@ -758,12 +791,12 @@ const AdvanceSetupPage = () => {
                         id={`${key}-${k}`}
                         onClick={(e) => {
                           toggleFeature(e);
-
                         }}
-                        className={`table-off ${key === "alpha" || key === "beta"
-                          ? "table-clickable"
-                          : ""
-                          }`}
+                        className={`table-off ${
+                          key === "alpha" || key === "beta"
+                            ? "table-clickable"
+                            : ""
+                        }`}
                       >
                         Off
                       </td>
