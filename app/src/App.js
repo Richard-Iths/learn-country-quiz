@@ -11,7 +11,7 @@ import tie from "../assets/tie.jpg";
 import "./featureFlags";
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { ref, getDatabase, set, update } from "firebase/database";
+import { ref, getDatabase, set, update, serverTimestamp } from "firebase/database";
 import { useObject } from "react-firebase-hooks/database";
 import {
   InitAnalytics,
@@ -19,6 +19,9 @@ import {
   InitLogRocket,
   LogRocketIdentify,
 } from "./analytics";
+
+
+
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvxyz", 5);
 
@@ -42,6 +45,8 @@ const app = initializeApp(firebaseConfig);
 let analytics = null;
 
 const db = getDatabase(app);
+
+
 
 function App() {
   const { improvedHeader } = JSON.parse(localStorage.getItem("features"));
@@ -96,10 +101,10 @@ function App() {
           </Route>
         </div>
         <div
-          className={`footer ${
-            featureProfile ? "footer-color-" + featureProfile.profile : ""
-          }`}
+          className={`footer ${featureProfile ? "feature--background-" + featureProfile.background : ""
+            }`}
         ></div>
+        <FinalCountdown />
       </div>
     </CookieBanner>
   );
@@ -139,7 +144,7 @@ const StartPage = ({ latest_game }) => {
       updates[`/games/${nextGame}`] = game;
       await update(ref(db), updates);
       setLocation(`/game/${nextGame}/2`);
-
+      // SetCountDown(snapshot_countdown.val())
       await utils.sleep(3000);
       const updates2 = {};
       updates2[`/games/${nextGame}/status`] = "playing";
@@ -237,7 +242,7 @@ const LatestScore = () => {
       const finishedGames = Object.values(snapshot.val())
         .filter((game) => game.status === "finished")
         .reverse()
-        .slice(0, 6);
+        .slice(0, 3);
       console.log(finishedGames);
       setLatestGames([...finishedGames]);
     }
@@ -298,7 +303,7 @@ const GamePage = ({ gameId, playerId, featureProfile }) => {
   );
 };
 
-const QuestionPage = ({ gameId, playerId, grid }) => {
+const QuestionPage = ({ gameId, playerId, grid, countdown }) => {
   const [myPerformance, setMyPerformance] = React.useState({});
   React.useEffect(() => {
     if (!myPerformance.t1) {
@@ -311,13 +316,44 @@ const QuestionPage = ({ gameId, playerId, grid }) => {
         ? LogAnalyzer(analytics, "answer-time-grid", { res })
         : LogAnalyzer(analytics, "answer-time-stacked", { res });
     }
-    console.log(myPerformance);
+
   }, [myPerformance]);
   const [snapshot, loading, error] = useObject(ref(db, `games/${gameId}`));
+  const [snapshot_countdown, loading_countdown, error_countdown] = useObject(ref(db, "count_down"));
   //feature flag
+  const [isCountDown, setIsCountDown] = React.useState(null)
+  const [CountDownTime, setCountDownTime] = React.useState(null)
+
+
   const { improvedScoring } = JSON.parse(localStorage.getItem("features"));
   if (loading) return <div className="fw6 fs5">Loading...</div>;
   const game = snapshot.val();
+
+
+  const SetCountDown = async (snap) => {
+    console.log(snap);
+    const time = serverTimestamp()
+    const EndTimeLocale = new Date().toLocaleString(time.sv)
+    const EndTimeMs = new Date(EndTimeLocale).getTime() + (snap.seconds * 1000)
+    setCountDownTime(snap.seconds)
+    let Intervallen = null
+    setIsCountDown(true)
+      if (!Intervallen) {
+        Intervallen = setInterval(() => {
+
+          const StartTimeLocale = new Date().toLocaleString(time.sv)
+          const StartTimeMs = new Date(StartTimeLocale).getTime()
+          const CountDown = EndTimeMs - StartTimeMs
+          if (CountDown <= 0) {
+            setIsCountDown(false)
+            clearInterval(Intervallen)
+          }
+
+          setCountDownTime(parseInt(CountDown / 1000))
+        }, 1000)
+    }
+    await utils.sleep(snap.seconds*1000)
+  }
 
   const youKey = `player${playerId}`;
   const opponentKey = `player${parseInt(playerId) === 1 ? 2 : 1}`;
@@ -344,14 +380,14 @@ const QuestionPage = ({ gameId, playerId, grid }) => {
     await update(ref(db), updates);
 
     if (game.currentQuestion < Object.values(game.questions).length) {
-      await utils.sleep(3000);
+     countdown? await SetCountDown(snapshot_countdown.val()) : await utils.sleep(3000);
       setMyPerformance({ t1: performance.now() });
       const updates2 = {};
       updates2[`/games/${gameId}/currentQuestion`] =
         parseInt(game.currentQuestion) + 1;
       await update(ref(db), updates2);
     } else {
-      await utils.sleep(3000);
+      countdown? await SetCountDown(snapshot_countdown.val()) : await utils.sleep(3000);
       const updates2 = {};
       updates2[`/games/${gameId}/status`] = "finished";
       await update(ref(db), updates2);
@@ -377,9 +413,8 @@ const QuestionPage = ({ gameId, playerId, grid }) => {
           }
           return (
             <div
-              className={`button alt ${correct && "alt-green"} ${
-                correct === false && "alt-red"
-              } ${grid && "grid-alt"}`}
+              className={`button alt ${correct && "alt-green"} ${correct === false && "alt-red"
+                } ${grid && "grid-alt"}`}
               key={countryCode}
               title={countryCode}
               onClick={() => {
@@ -388,7 +423,7 @@ const QuestionPage = ({ gameId, playerId, grid }) => {
               }}
             >
               {countries[countryCode.toUpperCase()]}
-              {}
+              { }
               {youOrOpponent && (
                 <div className="alt-label">{youOrOpponent}</div>
               )}
@@ -397,7 +432,7 @@ const QuestionPage = ({ gameId, playerId, grid }) => {
         })}
       </div>
       {question.fastest && (
-        <div className="fs7 fw5 m9">Get ready for the next question...</div>
+        <div className="fs7 fw5 m9">Get ready for the next question...<FinalCountdown time={CountDownTime} /></div>
       )}
       {question.fastest && (
         <QuickResults
@@ -759,9 +794,8 @@ const AdvanceSetupPage = () => {
                         }}
                         key={index}
                         id={`${key}-${k}`}
-                        className={`${k !== "background" && "table-on"} ${
-                          k !== "background" ? "table-clickable" : ""
-                        }`}
+                        className={`${k !== "background" && "table-on"} ${k !== "background" ? "table-clickable" : ""
+                          }`}
                       >
                         {k === "background" ? (
                           <div className="feature__background-wrapper">
@@ -772,11 +806,10 @@ const AdvanceSetupPage = () => {
                                   onClick={changeFeatureBackground}
                                   id={`${key}-${item}`}
                                   className={`feature__background feature--background-${item}
-                            ${
-                              value === item
-                                ? "feature--current-active"
-                                : "feature--current-inactive"
-                            }`}
+                            ${value === item
+                                      ? "feature--current-active"
+                                      : "feature--current-inactive"
+                                    }`}
                                 ></div>
                               );
                             })}
@@ -792,11 +825,10 @@ const AdvanceSetupPage = () => {
                         onClick={(e) => {
                           toggleFeature(e);
                         }}
-                        className={`table-off ${
-                          key === "alpha" || key === "beta"
+                        className={`table-off ${key === "alpha" || key === "beta"
                             ? "table-clickable"
                             : ""
-                        }`}
+                          }`}
                       >
                         Off
                       </td>
@@ -810,5 +842,19 @@ const AdvanceSetupPage = () => {
     </section>
   );
 };
+
+
+const FinalCountdown = ({ time }) => {
+
+  return (<h1>{time}</h1>)
+}
+
+const Settings = ({ settings }) => {
+
+  return <></>
+}
+
+
+
 
 export default App;
