@@ -379,3 +379,28 @@
 .feature--current-inactive{
 	opacity: 50%;
 }
+
+.settings__modal {
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding: 4rem;
+}
+
+.settings {
+	display: flex;
+	flex-direction: column;
+}
+
+.settings__icon {
+	max-width: 3rem;
+	display: block;
+	cursor: grab;
+	font-size: 3rem;
+}
+
+.settings__icon:hover {
+	font-size: 4rem;
+	transform: rotate(360deg);
+	transition: all 500ms ease;
+}

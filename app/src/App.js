@@ -61,6 +61,8 @@ function App() {
     }
   }, [snapshot]);
 
+  /* Demo-a-2 */
+
   React.useEffect(() => {
     if (!localStorage.getItem("profile")) {
       const random = Math.floor(Math.random() * 10);
@@ -151,6 +153,12 @@ const StartPage = ({ latest_game }) => {
       await update(ref(db), updates2);
     }
   };
+
+  /*
+  
+  demo-a
+  
+  */
   return (
     <div className="page">
       <div className="st-flags">
@@ -241,9 +249,7 @@ const LatestScore = () => {
     if (!loading) {
       const finishedGames = Object.values(snapshot.val())
         .filter((game) => game.status === "finished")
-        .reverse()
         .slice(0, 3);
-      console.log(finishedGames);
       setLatestGames([...finishedGames]);
     }
   }, [snapshot]);
@@ -311,49 +317,33 @@ const QuestionPage = ({ gameId, playerId, grid, countdown }) => {
     }
     if (myPerformance.t1 && myPerformance.t2) {
       const res = (myPerformance.t2 - myPerformance.t1) / 1000;
-      console.log(res);
       grid
         ? LogAnalyzer(analytics, "answer-time-grid", { res })
         : LogAnalyzer(analytics, "answer-time-stacked", { res });
     }
 
   }, [myPerformance]);
-  const [snapshot, loading, error] = useObject(ref(db, `games/${gameId}`));
   const [snapshot_countdown, loading_countdown, error_countdown] = useObject(ref(db, "count_down"));
+  const [snapshot, loading, error] = useObject(ref(db, `games/${gameId}`));
+
   //feature flag
   const [isCountDown, setIsCountDown] = React.useState(null)
   const [CountDownTime, setCountDownTime] = React.useState(null)
+
+  countdown && React.useEffect(async () => {
+    const initCountdown = async () => {
+      if (!isCountDown) {
+        setIsCountDown(true)
+        await utils.SetCountDown({ seconds: 3 }, setCountDownTime, setIsCountDown)
+      }
+    }
+    await initCountdown()
+  }, [snapshot])
 
 
   const { improvedScoring } = JSON.parse(localStorage.getItem("features"));
   if (loading) return <div className="fw6 fs5">Loading...</div>;
   const game = snapshot.val();
-
-
-  const SetCountDown = async (snap) => {
-    console.log(snap);
-    const time = serverTimestamp()
-    const EndTimeLocale = new Date().toLocaleString(time.sv)
-    const EndTimeMs = new Date(EndTimeLocale).getTime() + (snap.seconds * 1000)
-    setCountDownTime(snap.seconds)
-    let Intervallen = null
-    setIsCountDown(true)
-      if (!Intervallen) {
-        Intervallen = setInterval(() => {
-
-          const StartTimeLocale = new Date().toLocaleString(time.sv)
-          const StartTimeMs = new Date(StartTimeLocale).getTime()
-          const CountDown = EndTimeMs - StartTimeMs
-          if (CountDown <= 0) {
-            setIsCountDown(false)
-            clearInterval(Intervallen)
-          }
-
-          setCountDownTime(parseInt(CountDown / 1000))
-        }, 1000)
-    }
-    await utils.sleep(snap.seconds*1000)
-  }
 
   const youKey = `player${playerId}`;
   const opponentKey = `player${parseInt(playerId) === 1 ? 2 : 1}`;
@@ -374,20 +364,22 @@ const QuestionPage = ({ gameId, playerId, grid, countdown }) => {
       updates[`/games/${gameId}/score/${youKey}`] = game.score[youKey] + 1;
     } else {
       if (improvedScoring) {
+
+        // Demo-b
         updates[`/games/${gameId}/score/${youKey}`] = game.score[youKey] - 1;
       }
     }
     await update(ref(db), updates);
 
     if (game.currentQuestion < Object.values(game.questions).length) {
-     countdown? await SetCountDown(snapshot_countdown.val()) : await utils.sleep(3000);
+      await utils.sleep(3000);
       setMyPerformance({ t1: performance.now() });
       const updates2 = {};
       updates2[`/games/${gameId}/currentQuestion`] =
         parseInt(game.currentQuestion) + 1;
       await update(ref(db), updates2);
     } else {
-      countdown? await SetCountDown(snapshot_countdown.val()) : await utils.sleep(3000);
+      await utils.sleep(3000);
       const updates2 = {};
       updates2[`/games/${gameId}/status`] = "finished";
       await update(ref(db), updates2);
@@ -605,6 +597,7 @@ const CookieBanner = ({ children }) => {
     setAgreement({ ...agreement, consent: true });
   };
 
+  // Demo-d
   React.useEffect(() => {
     localStorage.setItem("agreement", JSON.stringify(agreement));
     if (agreement.statistic && agreement.consent) {
@@ -662,6 +655,13 @@ const CookieBanner = ({ children }) => {
   );
 };
 
+/*
+
+Demo-a-3
+
+*/
+
+
 const SetupPage = () => {
   const [storage, setStorage] = React.useState(
     JSON.parse(localStorage.getItem("features"))
@@ -711,6 +711,8 @@ const SetupPage = () => {
     </section>
   );
 };
+
+// demo-e
 
 const AdvanceSetupPage = () => {
   const [snapshot, loading, error] = useObject(ref(db, "feature_flags"));
@@ -826,8 +828,8 @@ const AdvanceSetupPage = () => {
                           toggleFeature(e);
                         }}
                         className={`table-off ${key === "alpha" || key === "beta"
-                            ? "table-clickable"
-                            : ""
+                          ? "table-clickable"
+                          : ""
                           }`}
                       >
                         Off

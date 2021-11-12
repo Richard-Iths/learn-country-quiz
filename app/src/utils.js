@@ -1,7 +1,7 @@
 import * as R from 'ramda'
 import countries from './countries.js'
-
-export const randomQuestions = () => {
+import { serverTimestamp } from "firebase/database";
+export const randomQuestions = (numbQuestion) => {
 	const countriesArr = R.compose(R.keys)(countries).sort(() => 0.5 - Math.random())
 	const questions = {}
 
@@ -43,11 +43,11 @@ const hardCodedQuestions = {
 	}
 }
 
-export const createGame = () => {
+export const createGame = (props) => {
 
 	const { improvedQuestions } = JSON.parse(localStorage.getItem('features'))
 
-	const generatedQuestions = improvedQuestions ? randomQuestions() : hardCodedQuestions
+	const generatedQuestions = improvedQuestions ? randomQuestions(props) : hardCodedQuestions
 	return {
 		currentQuestion: 1,
 		questions: generatedQuestions,
@@ -58,3 +58,30 @@ export const createGame = () => {
 
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+
+
+export const SetCountDown = async (snap, setCountDownTime, setIsCountDown) => {
+	const time = serverTimestamp()
+	const EndTimeLocale = new Date().toLocaleString(time.sv)
+	const EndTimeMs = new Date(EndTimeLocale).getTime() + (snap.seconds * 1000)
+	setCountDownTime(snap.seconds)
+	let Intervallen = null
+	setIsCountDown(true)
+	if (!Intervallen) {
+		Intervallen = setInterval(() => {
+
+			const StartTimeLocale = new Date().toLocaleString(time.sv)
+			const StartTimeMs = new Date(StartTimeLocale).getTime()
+			const CountDown = EndTimeMs - StartTimeMs
+			if (CountDown <= 0) {
+				setIsCountDown(false)
+				clearInterval(Intervallen)
+			}
+
+			setCountDownTime(parseInt(Math.ceil(CountDown / 1000)))
+		}, 1000)
+	}
+	await sleep(snap.seconds * 1000)
+}
+
